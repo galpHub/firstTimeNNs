@@ -135,12 +135,14 @@ int main(int argc, char** argv){
 	double test_weights[3] = {1.0,2.0,0.0};
 	double test_input1[2] = { -2.0/3.0, 2.0/3.0 };
 	double test_input2[2] = {1.0,0.0};
-	printf("This is a test: ");
+	printf("This is a test of the activation functions' output: \n");
+	printf("Direct output of the rect functions in two sample cases: \n");
+	printf("%f, %f\n\n", n_rect(test_weights, test_input1, 2), n_rect(test_weights, test_input2, 2));
 	getchar();
-	printf("%f, %f\n", n_rect(test_weights, test_input1, 2), n_rect(test_weights, test_input2, 2));
-	getchar();
-	activation_function thefunction = activation_type(RECT);
-	printf("This is the doom: %f\n", thefunction(test_weights, test_input1, 2) );
+	activation_function function1 = activation_type(RECT);
+	activation_function function2 = activation_type(RECT);
+	printf("This is the outputs of the rect activation function called via activation_type: %f, %f\n",
+		function1(test_weights, test_input1, 2), function2(test_weights, test_input2, 2));
 	getchar();
 
 	return 0;
