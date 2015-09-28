@@ -2,25 +2,61 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <cstdlib>
+#include <vector>
+
+// Defining neuron types for simplicity.
 #define RECT 0
 #define TANH 1
 
+// A function to generate (hopefully 'real-valued') random numbers between 0 and 1
+double random_gen(){
+	return static_cast <double> (rand()) / static_cast <double>(RAND_MAX);
+}
 
-typedef double (*activation_function)(double*,double*,int); // typedef double (*)() activation_function;
+// Ease of referencing a function pointer for neurons to get their activation functions from the same place.
+typedef double (*activation_function)(double*,double*,int);
 
 
 class neuron{
-	int indegree; // the number of neurons from the lower layer connected to this neuron.
-	int* neuron_idcs; // Indices of neurons in the previous (lower) layer this neuron requires access to.
-	double* weights; // Weights for the computation of the neuron signal - including the bias as the last entry.
-	activation_function activation; // Activation function for the neuron.
-	char type[4]; // Short string descriptor of the activation function.
-	double value = 0; // Starting neuron signal.
+	public:
+		int indegree = 0; // the number of neurons from the lower layer connected to this neuron.
+		int* neuron_idcs = NULL; // Indices of neurons in the previous (lower) layer this neuron requires access to.
+		double* weights = NULL; // Weights for the computation of the neuron signal - including the bias as the last entry.
+		activation_function activation; // Activation function for the neuron.
+		std::string type; // Short string descriptor of the activation function.
+		double value = 0; // Starting neuron signal.
+
+	public:
+		neuron() = default;
+		neuron(int* input_neurons, int num_inputs, std::string act_type);
+		void fire(double*); // Updates the variable 'value' by evaluating the activation function on an input array.
+	
 	private:
-		void fire (double*);
-		void def_activation (void);
+		void def_activation(void); // 
 
 };
+
+
+// Initializes the neuron by indicating which neurons it's connected to, how many incomming connections it has
+// and what type of neuron is used. It also initializes the weights to uniform random numbers between 0 and 1.
+neuron::neuron(int* input_neurons, int num_inputs, std::string act_type){
+	indegree = num_inputs;
+	type = act_type;
+	std::vector<double> weights(num_inputs,0.0);
+	std::vector<int> neuron_idcs(num_inputs, 0);
+	neuron::def_activation();
+	for (int i = 0; i < num_inputs + 1; i++){
+		weights[i] = random_gen();
+	}
+}
+
+
+
+
+
+
+
 
 void neuron::fire(double* input){
 	if (!activation){
