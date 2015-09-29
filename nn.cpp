@@ -32,14 +32,12 @@ class neuron{
 		activation_function activation_f; // Activation function for the neuron.
 		std::string type; // Short string descriptor of the activation function.
 		double value = 0; // Starting neuron signal.
+		void fire(double*); // Updates the variable 'value' by evaluating the activation function on an input array.
 
-	public:
 		// Constructors
 		neuron() = default;
 		neuron(int* input_neurons, int num_inputs, std::string act_type);
 
-		void fire(double*); // Updates the variable 'value' by evaluating the activation function on an input array.
-	
 	private:
 		void def_activation(void); // 
 
