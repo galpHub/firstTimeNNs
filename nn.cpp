@@ -1,15 +1,18 @@
 // Implementation of feedforward neural networks with backpropagation.
 #include <iostream>
+
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <cstdlib>
 #include <vector>
 
+
 // Defining neuron types for simplicity.
 #define RECT 0
 #define TANH 1
 
-// A function to generate (hopefully 'real-valued') random numbers between 0 and 1
+// A function to generate ('real-valued') random numbers between 0 and 1
 double random_gen(){
 	return static_cast <double> (rand()) / static_cast <double>(RAND_MAX);
 }
@@ -28,8 +31,10 @@ class neuron{
 		double value = 0; // Starting neuron signal.
 
 	public:
+		// Constructors
 		neuron() = default;
 		neuron(int* input_neurons, int num_inputs, std::string act_type);
+
 		void fire(double*); // Updates the variable 'value' by evaluating the activation function on an input array.
 	
 	private:
@@ -50,40 +55,6 @@ neuron::neuron(int* input_neurons, int num_inputs, std::string act_type){
 		weights[i] = random_gen();
 	}
 }
-
-
-
-
-
-
-
-
-void neuron::fire(double* input){
-	if (!activation){
-		value = activation(weights, input, indegree);
-	}
-	else{
-		value = 0;
-	}
-	
-}
-
-void neuron::def_activation(){
-	if (type == "rect"){
-		activation = activation_type(RECT);
-	}
-	else if (type == "tanh"){
-		activation = activation_type(TANH);
-	}
-}
-
-
-class layer{
-};
-
-class n_network{
-};
-
 
 double n_rect(double* weights, double* input, int length){
 	double sum = 0;
@@ -110,20 +81,52 @@ double n_tanh(double* weights, double* input, int length){
 	}
 	sum += weights[length];
 
-	return 0.5*tanh(sum)+1;
+	return 0.5*tanh(sum) + 1;
 }
 
 
 activation_function activation_type(int type){
 	switch (type){
-		case RECT:
-			return (activation_function) n_rect;
-		case TANH:
-			return (activation_function) n_tanh;
-		default:
-			throw -1;
+	case RECT:
+		return (activation_function)n_rect;
+	case TANH:
+		return (activation_function)n_tanh;
+	default:
+		throw - 1;
 	}
 }
+
+
+void neuron::fire(double* input){
+	if (!activation){
+		value = activation(weights, input, indegree);
+	}
+	else{
+		value = 0;
+	}
+	
+}
+
+void neuron::def_activation(){
+	if (type == "rect"){
+		activation = activation_type(RECT);
+	}
+	else if (type == "tanh"){
+		activation = activation_type(TANH);
+	}
+}
+
+
+
+
+class layer{
+};
+
+class n_network{
+};
+
+
+
 
 
 
@@ -132,6 +135,7 @@ activation_function activation_type(int type){
 
 
 int main(int argc, char** argv){
+
 	double test_weights[3] = {1.0,2.0,0.0};
 	double test_input1[2] = { -2.0/3.0, 2.0/3.0 };
 	double test_input2[2] = {1.0,0.0};
