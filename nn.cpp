@@ -18,7 +18,7 @@ double random_gen(){
 }
 
 // Ease of referencing a function pointer for neurons to get their activation functions from the same place.
-typedef double (*activation_function)(std::vector<double>, std::vector<double>);
+
 
 // The neuron class. Implements a neuron by specifying the indices of the neurons in a previous layer from
 // which to take its inputs, what the weights corresponding to those inputs (with an additional bias term)
@@ -63,7 +63,8 @@ neuron::neuron(std::vector<int> input_neurons, int num_inputs, std::string act_t
 }
 
 
-// Implementation of activation functions for neurons.
+// Implementation of activation functions for neurons. Input is assumed to be a vector
+// corresponding to the collection of neuron firing signals from the previous layer.
 double neuron::n_rect(std::vector<double> input){
 	double sum = 0;
 	for (int i = 0; i < indegree; i++){
@@ -94,6 +95,7 @@ double neuron::n_tanh(std::vector<double> input){
 
 
 // Updates the value of the "values" variable in the neuron by evaluating the activation function.
+// Neurons in the input layer have their values unmodified by the fire function.
 void neuron::fire(std::vector<double> input){
 	if (type == "rect"){
 		value = n_rect(input);
@@ -119,13 +121,18 @@ void neuron::fire(std::vector<double> input){
 // are specified.
 class layer{
 	public:
-		layer() {
+		layer(int neuronas, layer* prev = NULL) {
+			numOfNeurons = neuronas;
+			prevLayer = prev;
+			if (prev != NULL){
+				noIncommingConnections = false;
+			}
 			neuron neuron_t;
 			neuronVector.reserve(numOfNeurons);
 			neuronSignals.reserve(numOfNeurons);
 			for (int i = 0; i < numOfNeurons; i++){
 				neuronVector.push_back(neuron_t);
-				neuronSignals.push_back((double&)neuronVector[i].value);
+				neuronSignals.push_back(neuronVector[i].value);
 			}
 		}
 
@@ -136,7 +143,7 @@ class layer{
 			}
 			else{
 				throw std::runtime_error(std::string(
-					"No incomming connections to this layer! Cannot initialize."));
+					"Incomming connections to this layer! Cannot initialize as an input layer."));
 			}
 		}
 
@@ -147,6 +154,7 @@ class layer{
 				for (int i = 0; i < numOfNeurons; i++){
 					neuronVector[i].fire(inputs);
 				}
+				neuronSignals = getLayerVals();
 			}
 			else{
 				throw std::runtime_error(std::string(
@@ -154,6 +162,18 @@ class layer{
 			}
 		}
 
+		std::vector<double> getLayerVals(){
+			if (numOfNeurons != 0){
+				std::vector < double > neuronVals(numOfNeurons);
+				for (int i = 0; i < numOfNeurons; i++){
+					neuronVals[i]= neuronVector[i].value;
+				}
+			}
+			else{
+				throw std::runtime_error(std::string(
+					"This layer has no neurons!"));
+			}
+		}
 
 	private:
 		int numOfNeurons;
@@ -163,6 +183,9 @@ class layer{
 		bool noIncommingConnections = true;
 
 };
+
+
+
 
 class n_network{
 };
