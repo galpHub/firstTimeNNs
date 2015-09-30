@@ -18,7 +18,7 @@ double random_gen(){
 }
 
 // Ease of referencing a function pointer for neurons to get their activation functions from the same place.
-typedef double (*activation_function)(std::vector<double>, double*, int);
+typedef double (*activation_function)(std::vector<double>, std::vector<double>);
 
 // The neuron class. Implements a neuron by specifying the indices of the neurons in a previous layer from
 // which to take its inputs, what the weights corresponding to those inputs (with an additional bias term)
@@ -29,44 +29,47 @@ class neuron{
 		int indegree = 0; // the number of neurons from the lower layer connected to this neuron.
 		std::vector<int> neuron_idcs; // Indices of neurons in the previous (lower) layer this neuron requires access to.
 		std::vector<double> weights; // Weights for the computation of the neuron signal - including the bias as the last entry.
-		activation_function activation_f; // Activation function for the neuron.
 		std::string type; // Short string descriptor of the activation function.
 		double value = 0; // Starting neuron signal.
-		void fire(double*); // Updates the variable 'value' by evaluating the activation function on an input array.
+		
 
 		// Constructors
 		neuron() = default;
-		neuron(int* input_neurons, int num_inputs, std::string act_type);
+		neuron(std::vector<int> input_neurons, int num_inputs, std::string act_type);
 
-	private:
-		void def_activation(void); // 
+		// Member functions
+		double n_rect( std::vector<double> input);
+		double n_tanh(std::vector<double> input); 
+		// Updates the variable 'value' by evaluating the activation function on an input array.
+		void fire(std::vector<double>); 
 
 };
 
 
 // Initializes the neuron by indicating which neurons it's connected to, how many incomming connections it has
 // and what type of neuron is used. It also initializes the weights to uniform random numbers between 0 and 1.
-neuron::neuron(int* input_neurons, int num_inputs, std::string act_type){
+neuron::neuron(std::vector<int> input_neurons, int num_inputs, std::string act_type){
 	indegree = num_inputs;
 	type = act_type;
 
 	weights.reserve(num_inputs + 1);
 	neuron_idcs.reserve(num_inputs);
 
-	neuron::def_activation();
-	for (int i = 0; i < num_inputs + 1; i++){
+	for (int i = 0; i < num_inputs; i++){
+		neuron_idcs.push_back(input_neurons[i]);
 		weights.push_back(random_gen());
 	}
+	weights.push_back(random_gen());
 }
 
 
 // Implementation of activation functions for neurons.
-double n_rect(std::vector<double> weights, double* input, int length){
+double neuron::n_rect(std::vector<double> input){
 	double sum = 0;
-	for (int i = 0; i < length; i++){
-		sum += weights[i] * input[i];
+	for (int i = 0; i < indegree; i++){
+		sum += weights[i] * input[neuron_idcs[i]];
 	}
-	sum += weights[length];
+	sum += weights[indegree];
 
 	if (sum >1){
 		return 1.0;
@@ -79,54 +82,86 @@ double n_rect(std::vector<double> weights, double* input, int length){
 	}
 }
 
-double n_tanh(std::vector<double> weights, double* input, int length){
+double neuron::n_tanh(std::vector<double> input){
 	double sum = 0;
-	for (int i = 0; i < length; i++){
-		sum += weights[i] * input[i];
+	for (int i = 0; i < indegree; i++){
+		sum += weights[i] * input[neuron_idcs[i]];
 	}
-	sum += weights[length];
+	sum += weights[indegree];
 
 	return 0.5*(tanh(sum) + 1);
 }
 
-// A get-er function for activation functions 
-activation_function activation_type(int type){
-	switch (type){
-	case RECT:
-		return (activation_function)n_rect;
-	case TANH:
-		return (activation_function)n_tanh;
-	default:
-		throw - 1;
-	}
-}
 
 // Updates the value of the "values" variable in the neuron by evaluating the activation function.
-void neuron::fire(double* input){
-	if (activation_f!=NULL){
-		value = activation_f(weights, input, indegree);
+void neuron::fire(std::vector<double> input){
+	if (type == "rect"){
+		value = n_rect(input);
 	}
-	else{
-		value = 0;
+	else if (type == "tanh"){
+		value = n_tanh(input);
 	}
-	
+
 }
 
 // Initializes the activation function of a neuron based on the value of "type", either rectilinear (RECT) or hyberbolic tangent
 // (TANH) currently implemented.
-void neuron::def_activation(){
-	if (type == "rect"){
-		activation_f = activation_type(RECT);
-	}
-	else if (type == "tanh"){
-		activation_f = activation_type(TANH);
-	}
-}
 
 
 
 
+
+
+
+
+
+// Neuron layers are just a mess of disconnected neurons until the connections
+// are specified.
 class layer{
+	public:
+		layer() {
+			neuron neuron_t;
+			neuronVector.reserve(numOfNeurons);
+			neuronSignals.reserve(numOfNeurons);
+			for (int i = 0; i < numOfNeurons; i++){
+				neuronVector.push_back(neuron_t);
+				neuronSignals.push_back((double&)neuronVector[i].value);
+			}
+		}
+
+		void layerLoadInput(std::vector<double> inputs)
+		{
+			if (noIncommingConnections){
+				neuronSignals = inputs;
+			}
+			else{
+				throw std::runtime_error(std::string(
+					"No incomming connections to this layer! Cannot initialize."));
+			}
+		}
+
+		void layerFire()
+		{
+			if (!noIncommingConnections && prevLayer != NULL){
+				std::vector<double> inputs = prevLayer->neuronSignals;
+				for (int i = 0; i < numOfNeurons; i++){
+					neuronVector[i].fire(inputs);
+				}
+			}
+			else{
+				throw std::runtime_error(std::string(
+					"Unitialized connections or previous layer! Cannot fire neurons."));
+			}
+		}
+
+
+	private:
+		int numOfNeurons;
+		std::vector<neuron> neuronVector;
+		std::vector<double> neuronSignals;
+		layer* prevLayer = NULL;
+		bool noIncommingConnections = true;
+
 };
 
 class n_network{

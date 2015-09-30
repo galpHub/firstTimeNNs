@@ -6,7 +6,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 neuron simpleNeuron(std::string name)
 {
-	int input_neurons[2] = { 0, 1 };
+	std::vector<int> input_neurons(2,0);
+	input_neurons[1] = 1;
 	int num_inputs = 2;
 
 	neuron jimmy(input_neurons, num_inputs, name);
@@ -31,7 +32,8 @@ namespace UnitTest1
 
 		TEST_METHOD(Neuron_Initialize_SUCCESS)
 		{
-			int input_neurons[2] = {0,1};
+			std::vector<int> input_neurons(2, 0);
+			input_neurons[1] = 1;
 			int num_inputs = 2;
 			int numOf = 0;
 			std::vector<double> weights(3, 0.0);
@@ -46,9 +48,11 @@ namespace UnitTest1
 
 		TEST_METHOD(Neuron_rectFire_SUCCESS)
 		{
-			double test_input[2] = { 0, 0 };
-			double test_output[2] = { 0, 0 };
-			double expected_output[2] = { 0, 0 };
+			std::vector<double> test_input(2,0);
+			std::vector<double> test_output(2, 0);
+			std::vector<double> expected_output(2, 0);
+
+
 
 			neuron jimmy = simpleNeuron("rect");
 			for (int j = 0; j < jimmy.indegree; j++){
@@ -66,9 +70,9 @@ namespace UnitTest1
 
 		TEST_METHOD(Neuron_tanhFire_SUCCESS)
 		{
-			double test_input[2] = { 0, 0 };
-			double test_output[2] = { 0, 0 };
-			double expected_output[2] = { 0, 0 };
+			std::vector<double> test_input(2, 0);
+			std::vector<double> test_output(2, 0);
+			std::vector<double> expected_output(2, 0);
 
 			neuron jimmy = simpleNeuron("tanh");
 			for (int j = 0; j < jimmy.indegree; j++){
@@ -94,7 +98,7 @@ namespace UnitTest1
 
 		TEST_METHOD(NeuronVector_init_access_SUCCESS)
 		{
-			double test_input[2];
+			std::vector<double> test_input(2, 0);
 			double test_value;
 			neuron jimmy = simpleNeuron("rect");
 			std::vector<neuron> james(4, jimmy);
