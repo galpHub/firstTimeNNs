@@ -136,6 +136,7 @@ class layer{
 			}
 		}
 
+		// Initializes the input layer by setting neuronSignals = inputs
 		void layerLoadInput(std::vector<double> inputs)
 		{
 			if (noIncommingConnections){
@@ -147,6 +148,8 @@ class layer{
 			}
 		}
 
+		// Fires neurons in the current layer by drawing on the neuronSignals of
+		// the previous layer and updating the neuronSignals of the current layer.
 		void layerFire()
 		{
 			if (!noIncommingConnections && prevLayer != NULL){
@@ -162,6 +165,7 @@ class layer{
 			}
 		}
 
+		// Get the current signals of the neurons in this layer.
 		std::vector<double> getLayerVals(){
 			if (numOfNeurons != 0){
 				std::vector < double > neuronVals(numOfNeurons);
@@ -172,6 +176,17 @@ class layer{
 			else{
 				throw std::runtime_error(std::string(
 					"This layer has no neurons!"));
+			}
+		}
+
+		// Command for use in implementing dropout.
+		void supressRandomNeurons(){
+			double coinflip = 0.0;
+			for (int i = 0; i < numOfNeurons; i++){
+				coinflip = random_gen();
+				if (coinflip < 0.5){
+					neuronSignals[i] = 0;
+				}
 			}
 		}
 
