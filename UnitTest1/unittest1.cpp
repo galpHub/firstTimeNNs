@@ -21,16 +21,16 @@ neuron simpleNeuron(std::string name)
 
 namespace UnitTest1
 {		
-	TEST_CLASS(UnitTest1)
+	TEST_CLASS(NeuronTests)
 	{
 	public:
 
-		TEST_METHOD(Neuron_Default_SUCCESS)
+		TEST_METHOD(Neuron_DefaultConstructor_SUCCESS)
 		{
 			neuron jimmy;
 		}
 
-		TEST_METHOD(Neuron_Initialize_SUCCESS)
+		TEST_METHOD(Neuron_NonDefaultConstructor_SUCCESS)
 		{
 			std::vector<int> input_neurons(2, 0);
 			input_neurons[1] = 1;
@@ -46,7 +46,7 @@ namespace UnitTest1
 			
 		}
 
-		TEST_METHOD(Neuron_rectFire_SUCCESS)
+		TEST_METHOD(Neuron_rectFireCorrectOutput_SUCCESS)
 		{
 			std::vector<double> test_input(2,0);
 			std::vector<double> test_output(2, 0);
@@ -55,7 +55,7 @@ namespace UnitTest1
 
 
 			neuron jimmy = simpleNeuron("rect");
-			for (int j = 0; j < jimmy.indegree; j++){
+			for (int j = 0; j < jimmy.get_indegree(); j++){
 				test_input[j] = 1.0;
 				jimmy.fire(test_input);
 				test_output[j] = jimmy.value;
@@ -68,14 +68,14 @@ namespace UnitTest1
 			
 		}
 
-		TEST_METHOD(Neuron_tanhFire_SUCCESS)
+		TEST_METHOD(Neuron_tanhFireCorrectOutput_SUCCESS)
 		{
 			std::vector<double> test_input(2, 0);
 			std::vector<double> test_output(2, 0);
 			std::vector<double> expected_output(2, 0);
 
 			neuron jimmy = simpleNeuron("tanh");
-			for (int j = 0; j < jimmy.indegree; j++){
+			for (int j = 0; j < jimmy.get_indegree(); j++){
 				test_input[j] = 1.0;
 
 				jimmy.fire(test_input);
@@ -90,22 +90,57 @@ namespace UnitTest1
 			}
 		}
 
-		TEST_METHOD(Neuron_nullFire_SUCCESS)
+		TEST_METHOD(Neuron_defaultConstructorNeuronNotFiring_SUCCESS)
 		{
 			neuron jimmy;
+			std::vector<double> inputs(50, 1);
+			jimmy.fire(inputs);
 			Assert::AreEqual(jimmy.value, 0.0);
 		}
 
-		TEST_METHOD(NeuronVector_init_access_SUCCESS)
+		TEST_METHOD(Neuron_independenceOfNeuronsInVectorOfNeurons_SUCCESS)
 		{
 			std::vector<double> test_input(2, 0);
 			double test_value;
 			neuron jimmy = simpleNeuron("rect");
 			std::vector<neuron> james(4, jimmy);
 
+			// Some arbitrary values between 0 and 1 to test the firing
+			// of the neuron.
+			double input_values[4] = { .6,.1,0.7,.3 };
+
 
 			for (int i = 0; i < 4; i++){
-				test_input[0] = test_input[1] = random_gen();
+				test_input[0] = test_input[1] = input_values[i];
+				james[i].fire(test_input);
+			}
+
+			for (int i = 0; i < 4; i++){
+				for (int j = 0; j < 4; j++){
+					if (james[i].value == james[j].value && i!=j){
+						Assert::Fail();
+						break;
+					}
+				}
+
+			}
+
+		}
+
+
+		TEST_METHOD(Neuron_initVectorOfNeuronsWithReferenceNeuron_SUCCESS)
+		{
+			std::vector<double> test_input(2, 0);
+			double test_value;
+			neuron jimmy = simpleNeuron("rect");
+			std::vector<neuron> james(4, jimmy);
+
+			// Some arbitrary values between 0 and 1 to test the firing
+			// of the neuron.
+			double input_values[4] = { .6, .1, 0.7, .3 };
+
+			for (int i = 0; i < 4; i++){
+				test_input[0] = test_input[1] = input_values[i];
 				james[i].fire(test_input);
 				jimmy.fire(test_input);
 				if (james[i].value != jimmy.value){
@@ -115,7 +150,6 @@ namespace UnitTest1
 			}
 
 		}
-
 
 	};
 }

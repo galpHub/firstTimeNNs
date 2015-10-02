@@ -26,12 +26,8 @@ double random_gen(){
 // layer doesn't have an activation function.
 class neuron{
 	public:
-		int indegree = 0; // the number of neurons from the lower layer connected to this neuron.
-		std::vector<int> neuron_idcs; // Indices of neurons in the previous (lower) layer this neuron requires access to.
-		std::vector<double> weights; // Weights for the computation of the neuron signal - including the bias as the last entry.
-		std::string type; // Short string descriptor of the activation function.
 		double value = 0; // Starting neuron signal.
-		
+		std::vector<double> weights; // Weights for the computation of the neuron signal - including the bias as the last entry.
 
 		// Constructors
 		neuron() = default;
@@ -40,8 +36,16 @@ class neuron{
 		// Member functions
 		double n_rect( std::vector<double> input);
 		double n_tanh(std::vector<double> input); 
+
+		int get_indegree() { return indegree; }
+		std::string get_type() { return type; }
+
 		// Updates the variable 'value' by evaluating the activation function on an input array.
 		void fire(std::vector<double>); 
+	private:
+		int indegree = 0; // the number of neurons from the lower layer connected to this neuron.
+		std::vector<int> neuron_idcs; // Indices of neurons in the previous (lower) layer this neuron requires access to.
+		std::string type; // Short string descriptor of the activation function.
 
 };
 
@@ -132,7 +136,7 @@ class layer{
 			neuronSignals.reserve(numOfNeurons);
 			for (int i = 0; i < numOfNeurons; i++){
 				neuronVector.push_back(neuron_t);
-				neuronSignals.push_back(neuronVector[i].value);
+				neuronSignals.push_back(0.0); // neuronVector[i].value == 0.0
 			}
 		}
 
