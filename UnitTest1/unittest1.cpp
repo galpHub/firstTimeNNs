@@ -101,7 +101,6 @@ namespace UnitTest1
 		TEST_METHOD(Neuron_independenceOfNeuronsInVectorOfNeurons_SUCCESS)
 		{
 			std::vector<double> test_input(2, 0);
-			double test_value;
 			neuron jimmy = simpleNeuron("rect");
 			std::vector<neuron> james(4, jimmy);
 
@@ -131,7 +130,6 @@ namespace UnitTest1
 		TEST_METHOD(Neuron_initVectorOfNeuronsWithReferenceNeuron_SUCCESS)
 		{
 			std::vector<double> test_input(2, 0);
-			double test_value;
 			neuron jimmy = simpleNeuron("rect");
 			std::vector<neuron> james(4, jimmy);
 
@@ -150,6 +148,46 @@ namespace UnitTest1
 			}
 
 		}
+		
+		TEST_METHOD(Neuron_computeRectGradientWrtWeights_SUCCESS){
+			neuron jimmy = simpleNeuron("rect");
+			std::vector < double > inputToGrad(jimmy.get_indegree(), 0);
 
+			inputToGrad[0] = 37; inputToGrad[1] = 23;
+			jimmy.fire(inputToGrad);
+
+			std::vector<double> observed_grad = jimmy.gradWrtWeights(inputToGrad);
+			std::vector<double> expected_grad(jimmy.get_indegree()+1);
+			expected_grad[0] = inputToGrad[0]; 
+			expected_grad[1] = inputToGrad[1];
+			expected_grad[2] = 1.0;
+			
+			for (int j = 0; j < jimmy.get_indegree()+1; j++){
+				if (abs(observed_grad[j]- expected_grad[j]) > 1e-16){
+					Assert::Fail();
+				}
+			}
+		}
+
+		TEST_METHOD(Neuron_computeTanhGradientWrtWeights_SUCCESS){
+			neuron jimmy = simpleNeuron("tanh");
+			std::vector < double > inputToGrad(jimmy.get_indegree(), 0);
+
+			inputToGrad[0] = 1.0/4; inputToGrad[1] = 2.0/4;
+			jimmy.fire(inputToGrad);
+			double chainRuleFactor = 1 - pow(jimmy.value, 2);
+
+			std::vector<double> observed_grad = jimmy.gradWrtWeights(inputToGrad);
+			std::vector<double> expected_grad(jimmy.get_indegree() + 1);
+			expected_grad[0] = chainRuleFactor*inputToGrad[0];
+			expected_grad[1] = chainRuleFactor*inputToGrad[1];
+			expected_grad[2] = chainRuleFactor;
+
+			for (int j = 0; j < jimmy.get_indegree() + 1; j++){
+				if (abs(observed_grad[j] - expected_grad[j]) > 1e-16){
+					Assert::Fail();
+				}
+			}
+		}
 	};
 }

@@ -1,4 +1,4 @@
-// Implementation of feedforward neural networks with backpropagation.
+// Implementation of simple feedforward neural networks with backpropagation.
 #include <iostream>
 
 
@@ -40,6 +40,8 @@ class neuron{
 		int get_indegree() { return indegree; }
 		std::string get_type() { return type; }
 
+		std::vector<double> gradWrtWeights(std::vector<double>);
+
 		// Updates the variable 'value' by evaluating the activation function on an input array.
 		void fire(std::vector<double>); 
 	private:
@@ -49,6 +51,33 @@ class neuron{
 
 };
 
+// Computes the gradient of the neuron's output (i.e. value) with respect to the weights.
+std::vector<double> neuron::gradWrtWeights(std::vector<double> inputs){
+
+	std::vector<double> grad(indegree + 1,0);
+	double chainRuleFactor;
+	if (type == "rect"){
+		if (value != 0){
+			for (int i = 0; i < indegree; i++){
+				grad[i] = inputs[neuron_idcs[i]];
+			}
+			grad[indegree] = 1.0;
+		}
+		return grad;
+	}
+	else if (type == "tanh"){
+		chainRuleFactor = 1 - pow(value,2);
+		for (int i = 0; i < indegree; i++){
+			grad[i] = chainRuleFactor*inputs[neuron_idcs[i]];
+		}
+		grad[indegree] = chainRuleFactor;
+		return grad;
+	}
+	else{
+		std::runtime_error(std::string("Unrecognized Neuron type!") );
+	}
+	
+}
 
 // Initializes the neuron by indicating which neurons it's connected to, how many incomming connections it has
 // and what type of neuron is used. It also initializes the weights to uniform random numbers between 0 and 1.
@@ -76,10 +105,7 @@ double neuron::n_rect(std::vector<double> input){
 	}
 	sum += weights[indegree];
 
-	if (sum >1){
-		return 1.0;
-	}
-	else if (sum<0){
+	if (sum<0){
 		return 0;
 	}
 	else{
@@ -109,14 +135,6 @@ void neuron::fire(std::vector<double> input){
 	}
 
 }
-
-// Initializes the activation function of a neuron based on the value of "type", either rectilinear (RECT) or hyberbolic tangent
-// (TANH) currently implemented.
-
-
-
-
-
 
 
 
