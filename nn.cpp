@@ -31,7 +31,7 @@ class neuron{
 
 		// Constructors
 		neuron() = default;
-		neuron(std::vector<int> input_neurons, int num_inputs, std::string act_type);
+		neuron(std::vector<int> input_neurons, std::string act_type);
 
 		// Member functions
 		double n_rect( std::vector<double> input);
@@ -76,12 +76,13 @@ std::vector<double> neuron::gradWrtWeights(std::vector<double> inputs){
 	else{
 		std::runtime_error(std::string("Unrecognized Neuron type!") );
 	}
-	
+	return grad;
 }
 
 // Initializes the neuron by indicating which neurons it's connected to, how many incomming connections it has
 // and what type of neuron is used. It also initializes the weights to uniform random numbers between 0 and 1.
-neuron::neuron(std::vector<int> input_neurons, int num_inputs, std::string act_type){
+neuron::neuron(std::vector<int> input_neurons, std::string act_type){
+	int num_inputs = input_neurons.size();
 	indegree = num_inputs;
 	type = act_type;
 
@@ -143,7 +144,7 @@ void neuron::fire(std::vector<double> input){
 // are specified.
 class layer{
 	public:
-		layer(int neuronas, layer* prev = NULL) {
+		layer(int neuronas = NULL, layer* prev = NULL) {
 			numOfNeurons = neuronas;
 			prevLayer = prev;
 			if (prev != NULL){
@@ -157,6 +158,13 @@ class layer{
 				neuronSignals.push_back(0.0); // neuronVector[i].value == 0.0
 			}
 		}
+
+		// Indicates where to connect the neurons of current layer
+		// and initializes the neuron types. Does not check if 'prev == NULL'.
+		// Overloaded to include a single type of neuron per layer of varying
+		// types within a layer.
+		void layerWiring(std::vector<std::vector<int>>, std::vector<std::string>);
+		void layer::layerWiring(std::vector<std::vector<int>>, std::string);
 
 		// Initializes the input layer by setting neuronSignals = inputs
 		void layerLoadInput(std::vector<double> inputs)
@@ -183,7 +191,8 @@ class layer{
 			}
 			else{
 				throw std::runtime_error(std::string(
-					"Unitialized connections or previous layer! Cannot fire neurons."));
+					"Unitialized connections or no previous layer! Cannot fire neurons.")
+					+std::string(" Check if 'this' is the input layer"));
 			}
 		}
 
@@ -212,7 +221,10 @@ class layer{
 			}
 		}
 
+		int getNeuronNum() { return numOfNeurons; };
+
 	private:
+
 		int numOfNeurons;
 		std::vector<neuron> neuronVector;
 		std::vector<double> neuronSignals;
@@ -220,6 +232,39 @@ class layer{
 		bool noIncommingConnections = true;
 
 };
+
+void layer::layerWiring(std::vector<std::vector<int>> neuronConnections,
+	std::vector<std::string> neuronTypes){
+	if (neuronConnections.size()!= numOfNeurons || neuronTypes.size() != numOfNeurons ||
+		neuronConnections.size() !=neuronTypes.size()){
+		std::runtime_error(std::string(
+			"Mismatch between number of neurons and attempted number of Neuron initializations!"));
+	}
+	else{
+		
+		for (int i = 0; i < (int)neuronConnections.size(); i++){
+			neuron neura(neuronConnections[i], neuronTypes[i]);
+			neuronVector[i] = neura;
+		}
+		noIncommingConnections = false;
+	}
+}
+
+void layer::layerWiring(std::vector<std::vector<int>> neuronConnections, std::string neuronType){
+	if ((int)neuronConnections.size() != numOfNeurons){
+		std::runtime_error(std::string("Mismatch between number of neurons and")
+			+std::string(" attempted number of Neuron initializations!"));
+	}
+	else{
+
+		for (int i = 0; i < (int)neuronConnections.size(); i++){
+			neuron neura(neuronConnections[i], neuronType);
+			neuronVector[i] = neura;
+		}
+		noIncommingConnections = false;
+	}
+}
+
 
 
 

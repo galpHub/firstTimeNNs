@@ -10,7 +10,7 @@ neuron simpleNeuron(std::string name)
 	input_neurons[1] = 1;
 	int num_inputs = 2;
 
-	neuron jimmy(input_neurons, num_inputs, name);
+	neuron jimmy(input_neurons, name);
 
 	for (int i = 0; i < num_inputs + 1; i++){
 		jimmy.weights[i] = 1.0 / 4.0;
@@ -38,7 +38,7 @@ namespace UnitTest1
 			int numOf = 0;
 			std::vector<double> weights(3, 0.0);
 
-			neuron jimmy( input_neurons, num_inputs, "rect");
+			neuron jimmy( input_neurons, "rect");
 			
 			if (jimmy.weights == weights){
 				Assert::Fail();
@@ -190,4 +190,20 @@ namespace UnitTest1
 			}
 		}
 	};
+
+	TEST_CLASS(LayerTests){
+		public:
+			TEST_METHOD(Layer_fireInputLayer_SUCCESS){
+
+				auto func = [] {
+					layer testLayer(10);
+					testLayer.layerFire(); 
+				};
+
+				Assert::ExpectException<std::runtime_error,void>(func);
+
+			}
+	};
+
+
 }
