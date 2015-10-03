@@ -203,6 +203,143 @@ namespace UnitTest1
 				Assert::ExpectException<std::runtime_error,void>(func);
 
 			}
+
+			TEST_METHOD(Layer_fireRectLayer_SUCCESS){
+				layer InputLayer(9);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+				std::vector<double> inputs(9);
+				std::vector<neuron> testNeurons(3);
+				std::vector<double> observed(3);
+				
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3 * j + i);
+					}
+				}
+
+				OutputLayer.layerWiring(wires, "rect");
+
+				if (OutputLayer.checkCompatibleLayer()){
+					// These inputs are all 0.
+					for (int k = 0; k < 9; k++){
+						inputs = std::vector<double>(9, 0);
+						inputs[k] = 1;
+						InputLayer.layerLoadInput(inputs);
+						// The OutputLayer should update all their values to the bias
+						// value of the weight vectors of each neuron.
+						testNeurons = OutputLayer.getNeuronVector();
+						OutputLayer.layerFire();
+						observed = OutputLayer.getNeuronSignals();
+						for (int i = 0; i < 3; i++){
+							testNeurons[i].fire(InputLayer.getNeuronSignals());
+							if (abs(observed[i] - testNeurons[i].value) >1e-16){
+								Assert::Fail();
+							}
+						}
+					}
+
+				}
+				else{
+					Assert::Fail();
+				}
+			}
+
+			TEST_METHOD(Layer_fireTanhLayer_SUCCESS){
+				layer InputLayer(9);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+				std::vector<double> inputs(9);
+				std::vector<neuron> testNeurons(3);
+				std::vector<double> observed(3);
+
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3 * j + i);
+					}
+				}
+
+				OutputLayer.layerWiring(wires, "tanh");
+
+				if (OutputLayer.checkCompatibleLayer()){
+					// These inputs are all 0.
+					for (int k = 0; k < 9; k++){
+						inputs = std::vector<double>(9, 0);
+						inputs[k] = 1;
+						InputLayer.layerLoadInput(inputs);
+						// The OutputLayer should update all their values to the bias
+						// value of the weight vectors of each neuron.
+						testNeurons = OutputLayer.getNeuronVector();
+						OutputLayer.layerFire();
+						observed = OutputLayer.getNeuronSignals();
+						for (int i = 0; i < 3; i++){
+							testNeurons[i].fire(InputLayer.getNeuronSignals());
+							if (abs(observed[i] - testNeurons[i].value) >1e-16){
+								Assert::Fail();
+							}
+						}
+					}
+
+				}
+				else{
+					Assert::Fail();
+				}
+			}
+
+			TEST_METHOD(Layer_loadInputLayer_SUCCESS){
+				layer testLayer(10);
+				std::vector<double> inputs(10, 1);
+
+				auto func = [testLayer](std::vector<double> input)mutable {
+					testLayer.layerLoadInput(input);
+					return testLayer.getNeuronSignals();
+				};
+				Assert::IsTrue(func(inputs) == inputs);
+			}
+
+			TEST_METHOD(Layer_invalidConnectionOfLayers_1_SUCCESS){
+				layer InputLayer(10);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+
+				// Incorporate incompatible wirings accesing the 11-th neuron of
+				// the input layer
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3*j+i+2);
+					}
+				}
+				OutputLayer.layerWiring(wires, "rect");
+				
+				Assert::IsFalse(OutputLayer.checkCompatibleLayer());
+
+			}
+
+			TEST_METHOD(Layer_invalidConnectionOfLayers_2_SUCCESS){
+				layer InputLayer;
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+
+				// No neurons in the input layer to connect to.
+				Assert::IsFalse(OutputLayer.checkCompatibleLayer());
+
+			}
+
+			TEST_METHOD(Layer_invalidConnectionOfLayers_3_SUCCESS){
+				layer InputLayer(10);
+				layer OutputLayer(3);
+				layer *link = &InputLayer;
+
+				Assert::IsTrue(OutputLayer.checkCompatibleLayer(link));
+			}
+
+
 	};
 
 

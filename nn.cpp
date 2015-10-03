@@ -6,7 +6,15 @@
 #include <math.h>
 #include <cstdlib>
 #include <vector>
+#include <algorithm>
 
+#define CANNOT_LINK_LAYERS std::string("Cannot link these layers! Wrong number of neurons or wiring specs!")
+#define UNRECOGNIZED_NEURON_TYPE std::string("Unrecognized Neuron type!")
+#define CANNOT_LOAD_NONINPUT_LAYER std::string("Incomming connections to this layer! Cannot initialize as an input layer.")
+#define CANNOT_FIRE_INPUT_LAYER std::string("Unitialized connections or no previous layer! Cannot fire neurons. Check if 'this' is the input layer")
+#define NO_NEURONS_EXIST std::string("This layer has no neurons!")
+#define MISMATCHED_NEURONS_INITIALIZATION std::string("Mismatch between number of neurons and attempted number of Neuron initializations!")
+#define NULL_LAYER_PTR std::string("Cannot be compatible with null layer!")
 
 // Defining neuron types for simplicity.
 #define RECT 0
@@ -37,6 +45,7 @@ class neuron{
 		double n_rect( std::vector<double> input);
 		double n_tanh(std::vector<double> input); 
 
+		std::vector<int> getNeuronIdcs(){ return neuron_idcs; }
 		int get_indegree() { return indegree; }
 		std::string get_type() { return type; }
 
@@ -74,7 +83,7 @@ std::vector<double> neuron::gradWrtWeights(std::vector<double> inputs){
 		return grad;
 	}
 	else{
-		std::runtime_error(std::string("Unrecognized Neuron type!") );
+		throw std::runtime_error( UNRECOGNIZED_NEURON_TYPE );
 	}
 	return grad;
 }
@@ -147,9 +156,6 @@ class layer{
 		layer(int neuronas = NULL, layer* prev = NULL) {
 			numOfNeurons = neuronas;
 			prevLayer = prev;
-			if (prev != NULL){
-				noIncommingConnections = false;
-			}
 			neuron neuron_t;
 			neuronVector.reserve(numOfNeurons);
 			neuronSignals.reserve(numOfNeurons);
@@ -164,7 +170,62 @@ class layer{
 		// Overloaded to include a single type of neuron per layer of varying
 		// types within a layer.
 		void layerWiring(std::vector<std::vector<int>>, std::vector<std::string>);
-		void layer::layerWiring(std::vector<std::vector<int>>, std::string);
+		void layerWiring(std::vector<std::vector<int>>, std::string);
+
+		// Checks if the layer below from which the current layer is going to take inputs
+		// is compatible in terms of memory accesses, i.e. neurons.
+		bool checkCompatibleLayer(layer *layerBelow) {
+
+			int neuronsBelow = layerBelow->getNeuronNum();
+
+			if (layerBelow == NULL){
+				throw std::invalid_argument(NULL_LAYER_PTR);
+			}
+			if (noIncommingConnections && neuronsBelow>0){
+				return true;
+			}
+			else if (neuronsBelow ==0){
+				return false;
+			}
+
+			int maxIdcs;
+			std::vector<int> wirings;
+			for (int i = 0; i < getNeuronNum(); i++){
+				wirings = neuronVector[i].getNeuronIdcs();
+				maxIdcs = *std::max_element(wirings.begin(), wirings.end());
+				if (neuronsBelow - 1 < maxIdcs){
+					return false;
+				}
+			}
+			return true;
+		}
+		bool checkCompatibleLayer() {
+
+			layer *layerBelow = prevLayer;
+			int neuronsBelow = layerBelow->getNeuronNum();
+
+			if (layerBelow == NULL){
+				throw std::invalid_argument(NULL_LAYER_PTR);
+			}
+			if (noIncommingConnections && neuronsBelow > 0){
+				return true;
+			}
+			else if (neuronsBelow == 0){
+				return false;
+			}
+
+
+			int maxIdcs;
+			std::vector<int> wirings;
+			for (int i = 0; i < getNeuronNum(); i++){
+				wirings = neuronVector[i].getNeuronIdcs();
+				maxIdcs = *std::max_element(wirings.begin(), wirings.end());
+				if (neuronsBelow - 1 < maxIdcs){
+					return false;
+				}
+			}
+			return true;
+		}
 
 		// Initializes the input layer by setting neuronSignals = inputs
 		void layerLoadInput(std::vector<double> inputs)
@@ -173,8 +234,7 @@ class layer{
 				neuronSignals = inputs;
 			}
 			else{
-				throw std::runtime_error(std::string(
-					"Incomming connections to this layer! Cannot initialize as an input layer."));
+				throw std::runtime_error(CANNOT_LOAD_NONINPUT_LAYER);
 			}
 		}
 
@@ -187,49 +247,50 @@ class layer{
 				for (int i = 0; i < numOfNeurons; i++){
 					neuronVector[i].fire(inputs);
 				}
-				neuronSignals = getLayerVals();
+				updateLayerVals();
 			}
 			else{
-				throw std::runtime_error(std::string(
-					"Unitialized connections or no previous layer! Cannot fire neurons.")
-					+std::string(" Check if 'this' is the input layer"));
+				throw std::runtime_error(CANNOT_FIRE_INPUT_LAYER);
 			}
 		}
 
 		// Get the current signals of the neurons in this layer.
-		std::vector<double> getLayerVals(){
+		void updateLayerVals(){
 			if (numOfNeurons != 0){
-				std::vector < double > neuronVals(numOfNeurons);
 				for (int i = 0; i < numOfNeurons; i++){
-					neuronVals[i]= neuronVector[i].value;
+					neuronSignals[i]= neuronVector[i].value;
 				}
 			}
 			else{
-				throw std::runtime_error(std::string(
-					"This layer has no neurons!"));
+				throw std::runtime_error(NO_NEURONS_EXIST);
 			}
 		}
 
 		// Command for use in implementing dropout.
-		void supressRandomNeurons(){
+		void supressRandomNeurons(double prob = 0.5){
 			double coinflip = 0.0;
 			for (int i = 0; i < numOfNeurons; i++){
 				coinflip = random_gen();
-				if (coinflip < 0.5){
+				if (coinflip < prob){
 					neuronSignals[i] = 0;
 				}
 			}
 		}
 
 		int getNeuronNum() { return numOfNeurons; };
+		std::vector<double> getNeuronSignals(){ return neuronSignals; };
+		std::vector<neuron> getNeuronVector(){ return neuronVector; };
 
 	private:
-
 		int numOfNeurons;
 		std::vector<neuron> neuronVector;
 		std::vector<double> neuronSignals;
+
+		// Indicates from which layer the neurons in the current take their input.
 		layer* prevLayer = NULL;
-		bool noIncommingConnections = true;
+
+		// Determines whether incomming neuron-neuron connections have been specified
+		bool noIncommingConnections = true; 
 
 };
 
@@ -237,8 +298,7 @@ void layer::layerWiring(std::vector<std::vector<int>> neuronConnections,
 	std::vector<std::string> neuronTypes){
 	if (neuronConnections.size()!= numOfNeurons || neuronTypes.size() != numOfNeurons ||
 		neuronConnections.size() !=neuronTypes.size()){
-		std::runtime_error(std::string(
-			"Mismatch between number of neurons and attempted number of Neuron initializations!"));
+		throw std::runtime_error(MISMATCHED_NEURONS_INITIALIZATION);
 	}
 	else{
 		
@@ -252,8 +312,7 @@ void layer::layerWiring(std::vector<std::vector<int>> neuronConnections,
 
 void layer::layerWiring(std::vector<std::vector<int>> neuronConnections, std::string neuronType){
 	if ((int)neuronConnections.size() != numOfNeurons){
-		std::runtime_error(std::string("Mismatch between number of neurons and")
-			+std::string(" attempted number of Neuron initializations!"));
+		throw std::runtime_error(MISMATCHED_NEURONS_INITIALIZATION);
 	}
 	else{
 
