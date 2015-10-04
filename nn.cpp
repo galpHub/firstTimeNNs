@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 #define CANNOT_LINK_LAYERS std::string("Cannot link these layers! Wrong number of neurons or wiring specs!")
 #define UNRECOGNIZED_NEURON_TYPE std::string("Unrecognized Neuron type!")
@@ -15,6 +16,7 @@
 #define NO_NEURONS_EXIST std::string("This layer has no neurons!")
 #define MISMATCHED_NEURONS_INITIALIZATION std::string("Mismatch between number of neurons and attempted number of Neuron initializations!")
 #define NULL_LAYER_PTR std::string("Cannot be compatible with null layer!")
+#define MISSING_CONNECTIONS std::string("NN either has a single layer or Layers may be incompatibly connected!")
 
 // Defining neuron types for simplicity.
 #define RECT 0
@@ -226,6 +228,9 @@ class layer{
 			}
 			return true;
 		}
+		bool isConnected(){
+			return checkCompatibleLayer() && noIncommingConnections==false && prevLayer != NULL;
+		}
 
 		// Initializes the input layer by setting neuronSignals = inputs
 		void layerLoadInput(std::vector<double> inputs)
@@ -243,7 +248,7 @@ class layer{
 		void layerFire()
 		{
 			if (!noIncommingConnections && prevLayer != NULL){
-				std::vector<double> inputs = prevLayer->neuronSignals;
+				std::vector<double> inputs = prevLayer->getNeuronSignals();
 				for (int i = 0; i < numOfNeurons; i++){
 					neuronVector[i].fire(inputs);
 				}
@@ -329,8 +334,39 @@ void layer::layerWiring(std::vector<std::vector<int>> neuronConnections, std::st
 
 
 class n_network{
-};
+	public:
+		n_network() = default;
+		std::vector < double > fireNetwork(std::vector<double> inputs){
+			if (canFireNetwork){
 
+				int numOfLayers = networkLayers.size();
+				networkLayers[0].layerLoadInput(inputs);
+				for (int i = 1; i < numOfLayers; i++){
+					networkLayers[i].layerFire();
+				}
+
+			}
+			else{
+				throw std::runtime_error(MISSING_CONNECTIONS);
+			}
+		}
+		std::vector < layer > networkLayers;
+
+	private:
+		bool canFireNetwork(){
+			int numOfLayers = networkLayers.size();
+			if (numOfLayers < 2){
+				return false;
+			}
+			for (int i = 1; i < numOfLayers; i++){
+				if (!networkLayers[i].isConnected()){
+					return false;
+				}
+			}
+			return true;
+		}
+		
+};
 
 
 
