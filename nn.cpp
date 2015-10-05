@@ -27,7 +27,7 @@ std::vector<double> operator+(std::vector<double> a, std::vector<double> b){
 	std::vector<double> c;
 	if (a.size() == b.size()){
 		c.reserve(a.size());
-		for (int i = 0; i < a.size(); i++){
+		for (int i = 0; i < (int)a.size(); i++){
 			c.push_back(a[i] + b[i]);
 		}
 		return c;
@@ -41,7 +41,7 @@ std::vector<double> operator-(std::vector<double> a, std::vector<double> b){
 	std::vector<double> c;
 	if (a.size() == b.size()){
 		c.reserve(a.size());
-		for (int i = 0; i < a.size(); i++){
+		for (int i = 0; i < (int)a.size(); i++){
 			c.push_back(a[i] - b[i]);
 		}
 		return c;
@@ -54,7 +54,7 @@ std::vector<double> operator-(std::vector<double> a, std::vector<double> b){
 std::vector<double> operator*(double a, std::vector<double> b){
 	std::vector<double> c;
 	c.reserve(b.size());
-	for (int i = 0; i < b.size(); i++){
+	for (int i = 0; i < (int)b.size(); i++){
 		c.push_back(a * b[i]);
 	}
 	return c;
@@ -425,7 +425,7 @@ class n_network{
 	public:
 		n_network() = default;
 		std::vector < double > fireNetwork(std::vector<double> inputs){
-			if (canFireNetwork){
+			if (canFireNetwork()){
 
 				int numOfLayers = networkLayers.size();
 				networkLayers[0].layerLoadInput(inputs);
@@ -465,7 +465,7 @@ class n_network{
 
 			int indegree;
 			std::vector < double > dEnextLayer(numOfNeuronsBelow);
-			std::vector<neuron> nthLayerNeurons = nthLayer.getNeuronVector;
+			std::vector<neuron> nthLayerNeurons = nthLayer.getNeuronVector();
 			std::vector<double> gradInInputs;
 
 			std::vector<int> neuronIdcs;
@@ -473,7 +473,7 @@ class n_network{
 
 			if (numOfNeurons != 0 && numOfNeuronsBelow != 0){
 				for (int i = 0; i < numOfNeurons; i++){
-					indegree = nthLayerNeurons[i].get_indegree;
+					indegree = nthLayerNeurons[i].get_indegree();
 					neuronIdcs = nthLayerNeurons[i].getNeuronIdcs();
 					neuronValue = nthLayerNeurons[i].value;
 					gradInInputs = nthLayerNeurons[i].gradWrtInputs();
@@ -503,7 +503,7 @@ void n_network::backPropagation(std::vector<double> inputs,std::vector<double>ou
 
 
 	dE_dvalues[numOfLayers - 1] = dE_doutput(outputs,
-									networkLayers[numOfLayers-1].getNeuronSignals);
+									networkLayers[numOfLayers-1].getNeuronSignals());
 	
 	// Backpropagation allows us to update dE_dvalues in the n-1-th layer
 	// by using the values of dE_dvalues in the n-th layer. Of course, the input
