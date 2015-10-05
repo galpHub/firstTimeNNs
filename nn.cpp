@@ -102,12 +102,16 @@ class neuron{
 		std::vector<double> gradWrtInputs();
 
 		// Updates the variable 'value' by evaluating the activation function on an input array.
-		void fire(std::vector<double>); 
+		void fire(std::vector<double>);
+		void suppress() { isSuppressed = true; }
+		void restore(){ isSuppressed = false; }
+		bool isSuppressedNeuron(){ return isSuppressed; }
+
 	private:
 		int indegree = 0; // the number of neurons from the lower layer connected to this neuron.
 		std::vector<int> neuron_idcs; // Indices of neurons in the previous (lower) layer this neuron requires access to.
 		std::string type; // Short string descriptor of the activation function.
-
+		bool isSuppressed = false;
 };
 
 // Computes the gradient of the neuron's output (i.e. value) with respect to the weights.
@@ -212,11 +216,16 @@ double neuron::n_tanh(std::vector<double> input){
 // Updates the value of the "values" variable in the neuron by evaluating the activation function.
 // Neurons in the input layer have their values unmodified by the fire function.
 void neuron::fire(std::vector<double> input){
-	if (type == "rect"){
-		value = n_rect(input);
-	}
-	else if (type == "tanh"){
-		value = n_tanh(input);
+
+	if (!isSuppressed){
+
+		if (type == "rect"){
+			value = n_rect(input);
+		}
+		else if (type == "tanh"){
+			value = n_tanh(input);
+		}
+
 	}
 
 }
@@ -350,14 +359,25 @@ class layer{
 		}
 
 		// Command for use in implementing dropout.
-		void supressRandomNeurons(double prob = 0.5){
+		std::vector<int> suppressRandomNeurons(double probOfSuppress = 0.5){
 			double coinflip = 0.0;
 			for (int i = 0; i < numOfNeurons; i++){
 				coinflip = random_gen();
-				if (coinflip < prob){
-					neuronSignals[i] = 0;
+				if (coinflip < probOfSuppress){
+					neuronVector[i].suppress();
+				}
+				else{
+					neuronVector[i].restore();
 				}
 			}
+		}
+
+		std::vector<int> getNonSuppressedNeurons(){
+			std::vector<int> notSuppressed(numOfNeurons,1);
+			for (int i = 0; i < numOfNeurons; i++){
+				notSuppressed[i] = !neuronVector[i].isSuppressedNeuron();
+			}
+			return notSuppressed;
 		}
 
 		int getNeuronNum() { return numOfNeurons; };
@@ -434,23 +454,26 @@ std::vector<double> leastSquares(std::vector<double> expected, std::vector<doubl
 class n_network{
 	public:
 		n_network() = default;
-		std::vector < double > fireNetwork(std::vector<double> inputs){
-			if (canFireNetwork()){
+		std::vector < std::vector<int> > fireNetwork(std::vector<double> inputs){
+			int numOfLayers = networkLayers.size();
 
-				int numOfLayers = networkLayers.size();
+			if (canFireNetwork()){
 				networkLayers[0].layerLoadInput(inputs);
 				for (int i = 1; i < numOfLayers; i++){
 					networkLayers[i].layerFire();
 				}
+
+				
 
 			}
 			else{
 				throw std::runtime_error(MISSING_CONNECTIONS);
 			}
 		}
+
 		std::vector < layer > networkLayers;
 		void backPropagation(std::vector<double> inputs, std::vector<double>outputs,
-								double);
+								double learnRate);
 
 	private:
 		bool canFireNetwork(){
@@ -467,6 +490,7 @@ class n_network{
 		}
 		std::vector<double>(*dE_doutput)(std::vector<double>,
 			std::vector<double>) = leastSquares;
+
 		std::vector<double> errorProp(layer nthLayer,std::vector<double> dE, layer layerBelow){
 
 			
