@@ -17,10 +17,50 @@
 #define MISMATCHED_NEURONS_INITIALIZATION std::string("Mismatch between number of neurons and attempted number of Neuron initializations!")
 #define NULL_LAYER_PTR std::string("Cannot be compatible with null layer!")
 #define MISSING_CONNECTIONS std::string("NN either has a single layer or Layers may be incompatibly connected!")
+#define NO_BACKPROP_W_1LAYER std::string("Cannot backpropagate with 1 layer!")
 
 // Defining neuron types for simplicity.
 #define RECT 0
 #define TANH 1
+
+std::vector<double> operator+(std::vector<double> a, std::vector<double> b){
+	std::vector<double> c;
+	if (a.size() == b.size()){
+		c.reserve(a.size());
+		for (int i = 0; i < a.size(); i++){
+			c.push_back(a[i] + b[i]);
+		}
+		return c;
+	}
+	else{
+		throw std::runtime_error(std::string("Vectors of different sizes cannot be added"));
+	}
+	
+}
+std::vector<double> operator-(std::vector<double> a, std::vector<double> b){
+	std::vector<double> c;
+	if (a.size() == b.size()){
+		c.reserve(a.size());
+		for (int i = 0; i < a.size(); i++){
+			c.push_back(a[i] - b[i]);
+		}
+		return c;
+	}
+	else{
+		throw std::runtime_error(std::string("Vectors of different sizes cannot be subtracted"));
+	}
+
+}
+std::vector<double> operator*(double a, std::vector<double> b){
+	std::vector<double> c;
+	c.reserve(b.size());
+	for (int i = 0; i < b.size(); i++){
+		c.push_back(a * b[i]);
+	}
+	return c;
+}
+
+
 
 // A function to generate ('real-valued') random numbers between 0 and 1
 double random_gen(){
@@ -52,6 +92,7 @@ class neuron{
 		std::string get_type() { return type; }
 
 		std::vector<double> gradWrtWeights(std::vector<double>);
+		std::vector<double> gradWrtInputs();
 
 		// Updates the variable 'value' by evaluating the activation function on an input array.
 		void fire(std::vector<double>); 
@@ -89,6 +130,33 @@ std::vector<double> neuron::gradWrtWeights(std::vector<double> inputs){
 	}
 	return grad;
 }
+std::vector<double> neuron::gradWrtInputs(){
+
+	std::vector<double> grad(indegree + 1, 0);
+	double chainRuleFactor;
+	if (type == "rect"){
+		if (value != 0){
+			for (int i = 0; i < indegree; i++){
+				grad[i] = weights[i];
+			}
+			grad[indegree] = 1.0;
+		}
+		return grad;
+	}
+	else if (type == "tanh"){
+		chainRuleFactor = 1 - pow(value, 2);
+		for (int i = 0; i < indegree; i++){
+			grad[i] = chainRuleFactor*weights[i];
+		}
+		grad[indegree] = chainRuleFactor;
+		return grad;
+	}
+	else{
+		throw std::runtime_error(UNRECOGNIZED_NEURON_TYPE);
+	}
+	return grad;
+}
+
 
 // Initializes the neuron by indicating which neurons it's connected to, how many incomming connections it has
 // and what type of neuron is used. It also initializes the weights to uniform random numbers between 0 and 1.
@@ -229,7 +297,7 @@ class layer{
 			return true;
 		}
 		bool isConnected(){
-			return checkCompatibleLayer() && noIncommingConnections==false && prevLayer != NULL;
+			return numOfNeurons!= 0 && checkCompatibleLayer() && noIncommingConnections==false && prevLayer != NULL;
 		}
 
 		// Initializes the input layer by setting neuronSignals = inputs
@@ -286,6 +354,13 @@ class layer{
 		std::vector<double> getNeuronSignals(){ return neuronSignals; };
 		std::vector<neuron> getNeuronVector(){ return neuronVector; };
 
+		void updateWeights(std::vector<double> dE_dval, double learnRate){
+			for (int i = 0; i < numOfNeurons; i++){
+				std::vector<double> delta = (-learnRate*dE_dval[i])*neuronVector[i].gradWrtWeights(prevLayer->getNeuronSignals());
+				neuronVector[i].weights = neuronVector[i].weights + delta;
+			}
+		}
+
 	private:
 		int numOfNeurons;
 		std::vector<neuron> neuronVector;
@@ -332,6 +407,19 @@ void layer::layerWiring(std::vector<std::vector<int>> neuronConnections, std::st
 
 
 
+std::vector<double> leastSquares(std::vector<double> expected, std::vector<double> observed){
+	int expSize = expected.size();
+	int obsSize = observed.size();
+	if (expSize != obsSize){
+		throw std::runtime_error("Mismatched dimensions in Least Squares gradient.");
+	}
+
+	return expected - observed;
+}
+
+
+
+
 
 class n_network{
 	public:
@@ -351,6 +439,8 @@ class n_network{
 			}
 		}
 		std::vector < layer > networkLayers;
+		void backPropagation(std::vector<double> inputs, std::vector<double>outputs,
+								double);
 
 	private:
 		bool canFireNetwork(){
@@ -365,10 +455,71 @@ class n_network{
 			}
 			return true;
 		}
-		
+		std::vector<double>(*dE_doutput)(std::vector<double>,
+			std::vector<double>) = leastSquares;
+		std::vector<double> errorProp(layer nthLayer,std::vector<double> dE, layer layerBelow){
+
+			
+			int numOfNeurons = nthLayer.getNeuronNum();
+			int numOfNeuronsBelow = layerBelow.getNeuronNum();
+
+			int indegree;
+			std::vector < double > dEnextLayer(numOfNeuronsBelow);
+			std::vector<neuron> nthLayerNeurons = nthLayer.getNeuronVector;
+			std::vector<double> gradInInputs;
+
+			std::vector<int> neuronIdcs;
+			double neuronValue;
+
+			if (numOfNeurons != 0 && numOfNeuronsBelow != 0){
+				for (int i = 0; i < numOfNeurons; i++){
+					indegree = nthLayerNeurons[i].get_indegree;
+					neuronIdcs = nthLayerNeurons[i].getNeuronIdcs();
+					neuronValue = nthLayerNeurons[i].value;
+					gradInInputs = nthLayerNeurons[i].gradWrtInputs();
+
+					for (int j = 0; j < indegree; j++){
+						dEnextLayer[neuronIdcs[j]] += neuronValue*gradInInputs[j];
+					}
+
+				}
+			}
+			else{
+				throw std::runtime_error(NO_NEURONS_EXIST);
+			}
+		}
+
 };
 
 
+void n_network::backPropagation(std::vector<double> inputs,std::vector<double>outputs, double learnRate){
+	int numOfLayers = networkLayers.size();
+	if (numOfLayers < 2){
+		throw std::runtime_error(NO_BACKPROP_W_1LAYER);
+	}
+
+	std::vector<std::vector<double>> dE_dvalues(numOfLayers);
+	fireNetwork(inputs);
+
+
+	dE_dvalues[numOfLayers - 1] = dE_doutput(outputs,
+									networkLayers[numOfLayers-1].getNeuronSignals);
+	
+	// Backpropagation allows us to update dE_dvalues in the n-1-th layer
+	// by using the values of dE_dvalues in the n-th layer. Of course, the input
+	// layer isnt relevant because we can't change the input.
+	for (int j = numOfLayers - 1; j > 1; j--){
+		dE_dvalues[j - 1] = errorProp(networkLayers[j], dE_dvalues[j], networkLayers[j - 1]);
+		networkLayers[j].updateWeights(dE_dvalues[j], learnRate);
+	}
+
+	networkLayers[1].updateWeights(dE_dvalues[1], learnRate);
+
+
+
+
+
+}
 
 
 
