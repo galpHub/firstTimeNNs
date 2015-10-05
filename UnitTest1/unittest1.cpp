@@ -189,6 +189,42 @@ namespace UnitTest1
 				}
 			}
 		}
+
+		TEST_METHOD(Neuron_computeRectGradientWrtInputs_SUCCESS){
+			neuron jimmy = simpleNeuron("rect");
+			std::vector < double > inputToGrad(jimmy.get_indegree(), 0);
+
+			inputToGrad[0] = 37; inputToGrad[1] = 23;
+			jimmy.fire(inputToGrad);
+			std::vector<double> expected_grad = (1.0)*jimmy.weights;
+			
+
+			std::vector<double> observed_grad = jimmy.gradWrtInputs();
+
+			for (int j = 0; j < jimmy.get_indegree() ; j++){
+				if (abs(observed_grad[j] - expected_grad[j]) > 1e-16){
+					Assert::Fail();
+				}
+			}
+		}
+
+		TEST_METHOD(Neuron_computeTanhGradientWrtInputs_SUCCESS){
+			neuron jimmy = simpleNeuron("tanh");
+			std::vector < double > inputToGrad(jimmy.get_indegree(), 0);
+
+			inputToGrad[0] = 37; inputToGrad[1] = 23;
+			jimmy.fire(inputToGrad);
+
+			std::vector<double> expected_grad = (1-pow(jimmy.value,2))*jimmy.weights;
+
+			std::vector<double> observed_grad = jimmy.gradWrtInputs();
+
+			for (int j = 0; j < jimmy.get_indegree(); j++){
+				if (abs(observed_grad[j] - expected_grad[j]) > 1e-16){
+					Assert::Fail();
+				}
+			}
+		}
 	};
 
 	TEST_CLASS(LayerTests){

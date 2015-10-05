@@ -25,9 +25,12 @@
 
 std::vector<double> operator+(std::vector<double> a, std::vector<double> b){
 	std::vector<double> c;
-	if (a.size() == b.size()){
-		c.reserve(a.size());
-		for (int i = 0; i < (int)a.size(); i++){
+	int aSize, bSize;
+	aSize = a.size();
+	bSize = b.size();
+	if (aSize == bSize){
+		c.reserve(aSize);
+		for (int i = 0; i < aSize; i++){
 			c.push_back(a[i] + b[i]);
 		}
 		return c;
@@ -39,9 +42,12 @@ std::vector<double> operator+(std::vector<double> a, std::vector<double> b){
 }
 std::vector<double> operator-(std::vector<double> a, std::vector<double> b){
 	std::vector<double> c;
-	if (a.size() == b.size()){
-		c.reserve(a.size());
-		for (int i = 0; i < (int)a.size(); i++){
+	int aSize, bSize;
+	aSize = a.size();
+	bSize = b.size();
+	if (aSize == bSize){
+		c.reserve(aSize);
+		for (int i = 0; i < aSize; i++){
 			c.push_back(a[i] - b[i]);
 		}
 		return c;
@@ -53,8 +59,9 @@ std::vector<double> operator-(std::vector<double> a, std::vector<double> b){
 }
 std::vector<double> operator*(double a, std::vector<double> b){
 	std::vector<double> c;
-	c.reserve(b.size());
-	for (int i = 0; i < (int)b.size(); i++){
+	int bSize = b.size();
+	c.reserve(bSize);
+	for (int i = 0; i < bSize; i++){
 		c.push_back(a * b[i]);
 	}
 	return c;
@@ -132,14 +139,13 @@ std::vector<double> neuron::gradWrtWeights(std::vector<double> inputs){
 }
 std::vector<double> neuron::gradWrtInputs(){
 
-	std::vector<double> grad(indegree + 1, 0);
+	std::vector<double> grad(indegree, 0);
 	double chainRuleFactor;
 	if (type == "rect"){
 		if (value != 0){
 			for (int i = 0; i < indegree; i++){
 				grad[i] = weights[i];
 			}
-			grad[indegree] = 1.0;
 		}
 		return grad;
 	}
@@ -148,7 +154,6 @@ std::vector<double> neuron::gradWrtInputs(){
 		for (int i = 0; i < indegree; i++){
 			grad[i] = chainRuleFactor*weights[i];
 		}
-		grad[indegree] = chainRuleFactor;
 		return grad;
 	}
 	else{
