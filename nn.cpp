@@ -359,7 +359,7 @@ class layer{
 		}
 
 		// Command for use in implementing dropout.
-		std::vector<int> suppressRandomNeurons(double probOfSuppress = 0.5){
+		void suppressRandomNeurons(double probOfSuppress = 0.5){
 			double coinflip = 0.0;
 			for (int i = 0; i < numOfNeurons; i++){
 				coinflip = random_gen();
@@ -392,9 +392,13 @@ class layer{
 		std::vector<neuron> getNeuronVector(){ return neuronVector; };
 
 		void updateWeights(std::vector<double> dE_dval, double learnRate){
+			bool canUpdate;
 			for (int i = 0; i < numOfNeurons; i++){
-				std::vector<double> delta = (-learnRate*dE_dval[i])*neuronVector[i].gradWrtWeights(prevLayer->getNeuronSignals());
-				neuronVector[i].weights = neuronVector[i].weights + delta;
+				canUpdate = !neuronVector[i].isSuppressedNeuron();
+				if (canUpdate){
+					std::vector<double> delta = (-learnRate*dE_dval[i])*neuronVector[i].gradWrtWeights(prevLayer->getNeuronSignals());
+					neuronVector[i].weights = neuronVector[i].weights + delta;
+				}
 			}
 		}
 
@@ -461,15 +465,16 @@ std::vector<double> leastSquares(std::vector<double> expected, std::vector<doubl
 class n_network{
 	public:
 		n_network() = default;
-		void fireNetwork(std::vector<double> inputs){
+		void fireNetworkToTrain(std::vector<double> inputs){
 			int numOfLayers = networkLayers.size();
 
 			if (canFireNetwork()){
 				networkLayers[0].layerLoadInput(inputs);
-				for (int i = 1; i < numOfLayers; i++){
+				for (int i = 1; i < numOfLayers-1; i++){
 					networkLayers[i].suppressRandomNeurons();
 					networkLayers[i].layerFire();
 				}
+				networkLayers[numOfLayers - 1].layerFire();
 
 				
 
@@ -498,6 +503,8 @@ class n_network{
 		}
 		std::vector<double>(*dE_doutput)(std::vector<double>,
 			std::vector<double>) = leastSquares;
+
+		void trainNetwork(std::vector<std::vector<double>>, std::vector<std::vector<double>>);
 
 		std::vector<double> errorProp(layer nthLayer,std::vector<double> dE, layer layerBelow){
 
@@ -531,6 +538,7 @@ class n_network{
 					}
 	
 				}
+				return dEnextLayer;
 			}
 			else{
 				throw std::runtime_error(NO_NEURONS_EXIST);
@@ -547,7 +555,7 @@ void n_network::backPropagation(std::vector<double> inputs,std::vector<double>ou
 	}
 
 	std::vector<std::vector<double>> dE_dvalues(numOfLayers);
-	fireNetwork(inputs);
+	fireNetworkToTrain(inputs);
 
 
 	dE_dvalues[numOfLayers - 1] = dE_doutput(outputs,
@@ -569,7 +577,20 @@ void n_network::backPropagation(std::vector<double> inputs,std::vector<double>ou
 
 }
 
+void n_network::trainNetwork(std::vector<std::vector<double>>vectorOfInputs,
+	std::vector<std::vector<double>> vectorOfOutputs){
 
+
+	// Simple learning rate formula.
+	int numOfInputs = vectorOfInputs.size();
+	int numOfOutputs = vectorOfOutputs.size();
+	if (numOfInputs == numOfOutputs){
+		for (int i = 0; i < numOfInputs;i++){
+			backPropagation(vectorOfInputs[i], vectorOfOutputs[i],0.5/(i+1));
+		}
+	}
+
+}
 
 
 
