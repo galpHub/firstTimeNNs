@@ -461,12 +461,13 @@ std::vector<double> leastSquares(std::vector<double> expected, std::vector<doubl
 class n_network{
 	public:
 		n_network() = default;
-		std::vector < std::vector<int> > fireNetwork(std::vector<double> inputs){
+		void fireNetwork(std::vector<double> inputs){
 			int numOfLayers = networkLayers.size();
 
 			if (canFireNetwork()){
 				networkLayers[0].layerLoadInput(inputs);
 				for (int i = 1; i < numOfLayers; i++){
+					networkLayers[i].suppressRandomNeurons();
 					networkLayers[i].layerFire();
 				}
 
@@ -508,21 +509,27 @@ class n_network{
 			std::vector < double > dEnextLayer(numOfNeuronsBelow);
 			std::vector<neuron> nthLayerNeurons = nthLayer.getNeuronVector();
 			std::vector<double> gradInInputs;
+			bool neuronIsActive;
 
 			std::vector<int> neuronIdcs;
 			double neuronValue;
 
 			if (numOfNeurons != 0 && numOfNeuronsBelow != 0){
 				for (int i = 0; i < numOfNeurons; i++){
-					indegree = nthLayerNeurons[i].get_indegree();
-					neuronIdcs = nthLayerNeurons[i].getNeuronIdcs();
-					neuronValue = nthLayerNeurons[i].value;
-					gradInInputs = nthLayerNeurons[i].gradWrtInputs();
+					neuronIsActive = !nthLayerNeurons[i].isSuppressedNeuron();
 
-					for (int j = 0; j < indegree; j++){
-						dEnextLayer[neuronIdcs[j]] += neuronValue*gradInInputs[j];
+					if (neuronIsActive){
+						indegree = nthLayerNeurons[i].get_indegree();
+						neuronIdcs = nthLayerNeurons[i].getNeuronIdcs();
+						neuronValue = nthLayerNeurons[i].value;
+						gradInInputs = nthLayerNeurons[i].gradWrtInputs();
+
+						for (int j = 0; j < indegree; j++){
+							dEnextLayer[neuronIdcs[j]] += neuronValue*gradInInputs[j];
+						}
+
 					}
-
+	
 				}
 			}
 			else{
