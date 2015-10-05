@@ -372,10 +372,74 @@ namespace UnitTest1
 				layer OutputLayer(3);
 				layer *link = &InputLayer;
 
+				// Check that the output layer could in principle be appropiately
+				// connected to the input neuron layer.
 				Assert::IsTrue(OutputLayer.checkCompatibleLayer(link));
 			}
 
+			TEST_METHOD(Layer_OutputIsImproperlyConnected_SUCCESS){
+				layer InputLayer(10);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
 
+				// Incorporate incompatible wirings accesing the 11-th neuron of
+				// the input layer
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3 * j + i + 2);
+					}
+				}
+				OutputLayer.layerWiring(wires, "rect");
+
+				// The output layer "isn't connected" because it's trying to access an
+				// 11-th neuron in the input layer.
+				Assert::IsFalse(OutputLayer.isConnected());
+			}
+
+			TEST_METHOD(Layer_InputIsProperlyConnected_EXCEPTION){
+				layer InputLayer(10);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+
+				// Incorporate incompatible wirings accesing the 11-th neuron of
+				// the input layer
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3 * j + i + 2);
+					}
+				}
+				OutputLayer.layerWiring(wires, "rect");
+
+				auto func = [InputLayer]() mutable {InputLayer.isConnected(); };
+
+				Assert::ExpectException<std::invalid_argument>(func);
+				
+			}
+
+			TEST_METHOD(Layer_OutputIsProperlyConnected_SUCCESS){
+				layer InputLayer(10);
+				layer *link = &InputLayer;
+				layer OutputLayer(3, link);
+
+				// Incorporate incompatible wirings accesing the 11-th neuron of
+				// the input layer
+				std::vector < std::vector<int>> wires(3);
+				for (int i = 0; i < 3; i++){
+					wires[i].reserve(3);
+					for (int j = 0; j < 3; j++){
+						wires[i].push_back(3 * j + i);
+					}
+				}
+				OutputLayer.layerWiring(wires, "rect");
+
+				// The output layer "isn't connected" because it's trying to access an
+				// 11-th neuron in the input layer.
+				Assert::IsTrue(OutputLayer.isConnected());
+			}
 	};
 
 

@@ -251,11 +251,13 @@ class layer{
 		// is compatible in terms of memory accesses, i.e. neurons.
 		bool checkCompatibleLayer(layer *layerBelow) {
 
-			int neuronsBelow = layerBelow->getNeuronNum();
+			int neuronsBelow;
 
 			if (layerBelow == NULL){
 				throw std::invalid_argument(NULL_LAYER_PTR);
 			}
+			neuronsBelow = layerBelow->getNeuronNum();
+
 			if (noIncommingConnections && neuronsBelow>0){
 				return true;
 			}
@@ -277,11 +279,13 @@ class layer{
 		bool checkCompatibleLayer() {
 
 			layer *layerBelow = prevLayer;
-			int neuronsBelow = layerBelow->getNeuronNum();
+			int neuronsBelow;
 
 			if (layerBelow == NULL){
 				throw std::invalid_argument(NULL_LAYER_PTR);
 			}
+			neuronsBelow = layerBelow->getNeuronNum();
+
 			if (noIncommingConnections && neuronsBelow > 0){
 				return true;
 			}
@@ -304,6 +308,7 @@ class layer{
 		bool isConnected(){
 			return numOfNeurons!= 0 && checkCompatibleLayer() && noIncommingConnections==false && prevLayer != NULL;
 		}
+		bool isPrevLayerNull(){ return prevLayer == NULL; }
 
 		// Initializes the input layer by setting neuronSignals = inputs
 		void layerLoadInput(std::vector<double> inputs)
