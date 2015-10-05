@@ -371,9 +371,16 @@ class layer{
 				}
 			}
 		}
+		void restoreAllNeurons(){
+			for (int i = 0; i < numOfNeurons; i++){
+				neuronVector[i].restore();
+			}
+		}
 
-		std::vector<int> getNonSuppressedNeurons(){
-			std::vector<int> notSuppressed(numOfNeurons,1);
+
+
+		std::vector<bool> getNonSuppressedNeurons(){
+			std::vector<bool> notSuppressed(numOfNeurons,1);
 			for (int i = 0; i < numOfNeurons; i++){
 				notSuppressed[i] = !neuronVector[i].isSuppressedNeuron();
 			}
