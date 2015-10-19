@@ -66,7 +66,13 @@ std::vector<double> operator*(double a, std::vector<double> b){
 	}
 	return c;
 }
-
+double sum(std::vector<double> a){
+	double out = 0;
+	for (int i = 0; i < (int)a.size(); i++){
+		out += a[i];
+	}
+	return out;
+}
 
 
 // A function to generate ('real-valued') random numbers between 0 and 1
@@ -484,6 +490,25 @@ class n_network{
 			}
 		}
 
+		std::vector<double> fireNetwork(std::vector<double> inputs){
+			int numOfLayers = networkLayers.size();
+
+			if (canFireNetwork()){
+				networkLayers[0].layerLoadInput(inputs);
+				for (int i = 1; i < numOfLayers - 1; i++){
+					networkLayers[i].restoreAllNeurons();
+					networkLayers[i].layerFire();
+				}
+				networkLayers[numOfLayers - 1].layerFire();
+
+				return networkLayers[numOfLayers - 1].getNeuronSignals();
+			}
+			else{
+				throw std::runtime_error(MISSING_CONNECTIONS);
+			}
+		}
+		
+
 		std::vector < layer > networkLayers;
 		void backPropagation(std::vector<double> inputs, std::vector<double>outputs,
 								double learnRate);
@@ -594,9 +619,7 @@ void n_network::trainNetwork(std::vector<std::vector<double>>vectorOfInputs,
 
 
 
-
-
 int main(int argc, char** argv){
-	
+
 	return 0;
 }
