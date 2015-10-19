@@ -313,17 +313,27 @@ namespace UnitTest1
 						}
 					}
 
-					testInput[0] = 1;
-					InputLayer.layerLoadInput(testInput);
-					OutputLayer.layerFire();
-					expectedOutput[0] = allWeights[0];
+					for (int j = 0; j < 9; j++){
+						testInput = std::vector<double>(9, 0);
+						testInput[j] = 1;
+						InputLayer.layerLoadInput(testInput);
+						OutputLayer.layerFire();
+						expectedOutput = std::vector<double>(3, 0);
+						int j2 = j % 3;
+						int j1 = j / 3;
+						expectedOutput[j1] = allWeights[j2+4*j1];
+		
 
-					for (int i = 0; i < 3; i++){
-						expectedOutput[i] += allWeights[3+4*i];
-						if (abs(OutputLayer.getNeuronSignals()[i] -  expectedOutput[i]) >1e-10){
-							Assert::Fail();
+						for (int i = 0; i < 3; i++){
+							// The operations on expectedOutput in the loop just
+							// add the bias terms to each output neuron.
+							expectedOutput[i] += allWeights[3 + 4 * i];
+							if (abs(OutputLayer.getNeuronSignals()[i] - expectedOutput[i]) >1e-16){
+								Assert::Fail();
+							}
 						}
 					}
+
 				
 
 				}
@@ -495,6 +505,8 @@ namespace UnitTest1
 		TEST_METHOD(NeuralNetwork_CreateTwoLayers_SUCCESS){
 
 			n_network brain0;
+			brain0.networkLayers = std::vector<layer>(2);
+
 			std::vector<double> testInput(10);
 			std::vector<double> testOutput(1);
 
@@ -507,23 +519,22 @@ namespace UnitTest1
 			std::vector<std::vector<int>> connections(1);
 			connections[0] = neuronIdcsLayer0;
 
-			std::vector<layer> twoLayers(2);
+			brain0.networkLayers[0] = layer(10);
+			brain0.networkLayers[1] = layer(1, &brain0.networkLayers[0]);
+			brain0.networkLayers[1].layerWiring(connections, "rect");
 
-			twoLayers[0] = layer(10);
-			twoLayers[1] = layer(1, &twoLayers[0]);
-			twoLayers[1].layerWiring(connections, "rect");
+			neuron outputNeuron = brain0.networkLayers[1].getNeuronVector()[0];
 
-			neuron outputNeuron = twoLayers[1].getNeuronVector()[0];
 
-			brain0.networkLayers = twoLayers; 
-			//int number = outputNeuron.weights.size();
-			//Assert::IsTrue(number > 0);
 			testOutput[0] = outputNeuron.weights[10];
-			for (int i = 0; i < 2; i++){
-				testInput[i] = 0;
+			for (int i = 0; i < 10; i++){
+				testInput[i] = i;
 				testOutput[0] += i*outputNeuron.weights[i];
-				outputVal = brain0.fireNetwork(testInput)[0];
-				if ( abs(testOutput[0]  - outputVal)>1e-16 ){
+				brain0.fireNetwork(testInput);
+				outputVal = brain0.networkLayers[1].getNeuronSignals()[0];
+	
+
+				if ( abs(testOutput[0]  - outputVal)>1e-14 ){
 					Assert::Fail();
 				}
 			}

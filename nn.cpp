@@ -407,6 +407,7 @@ class layer{
 				}
 			}
 		}
+		layer* getPrevLayer() { return prevLayer; }
 
 	private:
 		int numOfNeurons;
@@ -471,6 +472,7 @@ std::vector<double> leastSquares(std::vector<double> expected, std::vector<doubl
 class n_network{
 	public:
 		n_network() = default;
+
 		void fireNetworkToTrain(std::vector<double> inputs){
 			int numOfLayers = networkLayers.size();
 
@@ -616,6 +618,10 @@ void n_network::trainNetwork(std::vector<std::vector<double>>vectorOfInputs,
 	}
 
 }
+
+
+
+
 
 
 
