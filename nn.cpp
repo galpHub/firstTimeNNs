@@ -455,6 +455,7 @@ void layer::layerWiring(std::vector<std::vector<int>> neuronConnections, std::st
 
 
 
+
 std::vector<double> leastSquares(std::vector<double> expected, std::vector<double> observed){
 	int expSize = expected.size();
 	int obsSize = observed.size();
@@ -512,8 +513,25 @@ class n_network{
 		
 
 		std::vector < layer > networkLayers;
+
 		void backPropagation(std::vector<double> inputs, std::vector<double>outputs,
 								double learnRate);
+
+		void setLayers(std::vector<int> neuronsPerLayer, 
+			std::vector<std::vector<std::vector<int>>> interLayerConnections, 
+			std::vector<std::string> neuronTypes){
+
+			int numOfLayers = neuronsPerLayer.size();
+			networkLayers = std::vector<layer>(numOfLayers);
+
+			networkLayers[0] = layer(neuronsPerLayer[0]);
+			for (int i = 1; i < numOfLayers; i++){
+				networkLayers[i] = layer(neuronsPerLayer[i], &networkLayers[i-1]);
+				networkLayers[i].layerWiring(interLayerConnections[i - 1], neuronTypes[i - 1]);
+			}
+
+		}
+
 
 	private:
 		bool canFireNetwork(){

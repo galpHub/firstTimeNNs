@@ -540,6 +540,51 @@ namespace UnitTest1
 			}
 
 
+
+		}
+
+		TEST_METHOD(NeuralNetwork_CreateTwoLayers2_SUCCESS){
+
+			n_network brain0;
+			brain0.networkLayers = std::vector<layer>(2);
+
+			std::vector<double> testInput(10);
+			std::vector<double> testOutput(1);
+
+			std::vector<int> neuronIdcsLayer0(10);
+			double outputVal = 0;
+
+			for (int i = 0; i < 10; i++){
+				neuronIdcsLayer0[i] = i;
+			}
+			std::vector<std::vector<int>> connections(1);
+			connections[0] = neuronIdcsLayer0;
+
+			std::vector<int> neuronsPerLayer(2);
+			std::vector<std::vector<std::vector<int>>> nnConnections(1,connections);
+			std::vector<std::string> neuronTypes(1,"rect");
+
+			neuronsPerLayer[0]=10;
+			neuronsPerLayer[1]=1;
+			brain0.setLayers(neuronsPerLayer, nnConnections, neuronTypes);
+
+			neuron outputNeuron = brain0.networkLayers[1].getNeuronVector()[0];
+
+
+			testOutput[0] = outputNeuron.weights[10];
+			for (int i = 0; i < 10; i++){
+				testInput[i] = i;
+				testOutput[0] += i*outputNeuron.weights[i];
+				brain0.fireNetwork(testInput);
+				outputVal = brain0.networkLayers[1].getNeuronSignals()[0];
+
+
+				if (abs(testOutput[0] - outputVal)>1e-14){
+					Assert::Fail();
+				}
+			}
+
+
 		}
 
 	};
