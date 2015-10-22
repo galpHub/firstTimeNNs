@@ -638,11 +638,6 @@ void n_network::trainNetwork(std::vector<std::vector<double>>vectorOfInputs,
 }
 
 
-
-
-
-
-
 int main(int argc, char** argv){
 
 	return 0;
