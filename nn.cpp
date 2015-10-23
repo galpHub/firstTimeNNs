@@ -1,6 +1,7 @@
 // Implementation of simple feedforward neural networks with backpropagation.
 #include <iostream>
-
+#include <fstream>
+#include <sstream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <string>
 
 #define CANNOT_LINK_LAYERS std::string("Cannot link these layers! Wrong number of neurons or wiring specs!")
 #define UNRECOGNIZED_NEURON_TYPE std::string("Unrecognized Neuron type!")
@@ -254,6 +256,8 @@ class layer{
 				neuronSignals.push_back(0.0); // neuronVector[i].value == 0.0
 			}
 		}
+
+
 
 		// Indicates where to connect the neurons of current layer
 		// and initializes the neuron types. Does not check if 'prev == NULL'.
@@ -637,8 +641,92 @@ void n_network::trainNetwork(std::vector<std::vector<double>>vectorOfInputs,
 
 }
 
+// Ancilliary functions for reading and writting from or to a file.
+std::vector<int> stoiVector(std::vector<std::string> myString){
+	int n = myString.size();
+	std::vector<int> intVector(n);
+	for (int i = 0; i < n; i++)
+	{
+		intVector.push_back(std::stoi( myString[i] ));
+	}
+	return intVector;
+}
+
+std::vector<std::string> split(const std::string myString, char delim)
+{
+	std::stringstream S(myString);
+	std::string token;
+	std::vector<std::string> elem;
+	while (std::getline(S, token, delim)){
+		elem.push_back(token);
+	}
+	return elem;
+}
+
+
+
+
+void readFile(char* filename){
+	std::ifstream inputFile;
+	try
+	{
+		inputFile.open(filename);
+	}
+	catch (int e)
+	{
+		printf("An execption occurred. Exception Number: %i", e);
+	}
+	if (inputFile.is_open()){
+		std::string line;
+
+		std::getline(inputFile, line); // Skip first line Main header
+
+		std::getline(inputFile, line); // Extracts nn dimension parameters: numOfLayers,numOfNeuronsL1,numOfNeuronsL2, etc
+		std::vector<int> nnSize = stoiVector(split(line,(char)","));
+
+		std::getline(inputFile, line); // Extracts nn dimension parameters: typeOfL1,typeOfL2, etc, specified as integers
+		std::vector<int> nnParameters = stoiVector(split(line, (char)","));
+
+		// Sets up the basic structure of the network as undifferentiated neuron layers of
+		// appropriate sizes.
+		n_network myNetwork;
+		myNetwork.networkLayers = std::vector<layer>(nnSize[0]);
+		myNetwork.networkLayers[0] = layer(nnSize[1]);
+		for (int i = 2; i < (nnSize[0] - 1); i++)
+		{
+			myNetwork.networkLayers[i] = layer(nnSize[i], &myNetwork.networkLayers[i-1] );
+		}
+		
+		// Collects the wiring information & calls layerWiring
+
+		if (std::getline(inputFile, line))
+		{
+			if (line=="-nL")
+			{ // If the current read line reads the -nL flag (i.e. new layer) it must go up a layer.
+			}
+			stoiVector(	split(line,(char)",") );
+		}
+
+
+	}
+	else
+	{
+		std::runtime_error(std::string ("COULD NOT OPEN FILE"));
+	}
+
+}
+
+
+
 
 int main(int argc, char** argv){
 
+	for (int i = 0; i < argc; i++){
+		printf(argv[i]);
+		printf("\n");
+	}
+
+
+	printf("%d",0);
 	return 0;
 }
