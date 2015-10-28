@@ -666,8 +666,32 @@ std::vector<std::string> split(const std::string myString, char delim)
 
 
 
-void readFile(char* filename){
+n_network nnFromFile(char* filename)
+{
+	// FILE FORMAT:
+	// A line with contents: "-L 4" indicates the start of a new layer with 4 neurons.
+	// The four lines immediately following it each contain a sequence of space separated
+	// integers. The i-th line contains the connection information of the i-th neuron in the
+	// current layer. The integers are merely the indices of the neurons in the previous
+	// layer to which it is connected. The input layer needs no such lines because it has
+	// no previous layer to connect to. Thus the first two lines of the file should read 
+	// something like:
+	//
+	// -L 100
+	// -L 2
+	// 10 77 52
+	// 33 42 16
+	// -L 1
+	// #EOF
+	//
+	// The first line indicates that there are 100 neurons, with no inputs (it's the input 
+	// layer), and the next layer only contains two neurons, each with three incomming connections.
+	// The first of these neurons is connected to the 10th, 77th and 52nd inputs. Similarly for
+	// the second neuron.
+	// 
+
 	std::ifstream inputFile;
+	n_network brain;
 	try
 	{
 		inputFile.open(filename);
@@ -675,37 +699,49 @@ void readFile(char* filename){
 	catch (int e)
 	{
 		printf("An execption occurred. Exception Number: %i", e);
+		throw e;
 	}
 	if (inputFile.is_open()){
 		std::string line;
+		std::vector < int > parameters;
+		int currentLayer = -1;
+		int numOfNeurons = 0;
+		std::vector<int> neuronsPerLayer;
+		std::vector < std::vector<std::vector<int>> > interLayerConnections;
+		std::vector<std::string> neuronTypes;
 
-		std::getline(inputFile, line); // Skip first line Main header
+		//std::getline(inputFile, line);
+		//std::vector<int> nnParameters = stoiVector(std::vector<std::string>(1, line));
+		//int numOfLayers = nnParameters[0];
+		//int numOfInputs = nnParameters[1];
 
-		std::getline(inputFile, line); // Extracts nn dimension parameters: numOfLayers,numOfNeuronsL1,numOfNeuronsL2, etc
-		std::vector<int> nnSize = stoiVector(split(line,(char)","));
+		//std::vector < layer > newLayers(numOfLayers);
+		//newLayers[0] = layer(numOfInputs);
 
-		std::getline(inputFile, line); // Extracts nn dimension parameters: typeOfL1,typeOfL2, etc, specified as integers
-		std::vector<int> nnParameters = stoiVector(split(line, (char)","));
-
-		// Sets up the basic structure of the network as undifferentiated neuron layers of
-		// appropriate sizes.
-		n_network myNetwork;
-		myNetwork.networkLayers = std::vector<layer>(nnSize[0]);
-		myNetwork.networkLayers[0] = layer(nnSize[1]);
-		for (int i = 2; i < (nnSize[0] - 1); i++)
+		while (std::getline(inputFile, line))
 		{
-			myNetwork.networkLayers[i] = layer(nnSize[i], &myNetwork.networkLayers[i-1] );
+			std::vector<std::string> splitStr = split(line,(char)" ");
+			if (splitStr[0] == "-L")
+			{ // Start of newLayer
+				currentLayer += 1;
+				numOfNeurons = std::stoi(splitStr[1]);
+				neuronsPerLayer.push_back(numOfNeurons);
+				if (currentLayer > 0){
+					interLayerConnections.push_back(std::vector<std::vector<int>>());
+					neuronTypes.push_back(splitStr[1]);
+				}
+				
+			}
+			else if (currentLayer > 0)
+			{
+				interLayerConnections[currentLayer].push_back(stoiVector(splitStr));
+			}
+
+
 		}
 		
-		// Collects the wiring information & calls layerWiring
-
-		if (std::getline(inputFile, line))
-		{
-			if (line=="-nL")
-			{ // If the current read line reads the -nL flag (i.e. new layer) it must go up a layer.
-			}
-			stoiVector(	split(line,(char)",") );
-		}
+		brain.setLayers(neuronsPerLayer,interLayerConnections,neuronTypes);
+		return brain;
 
 
 	}
@@ -721,12 +757,18 @@ void readFile(char* filename){
 
 int main(int argc, char** argv){
 
-	for (int i = 0; i < argc; i++){
-		printf(argv[i]);
-		printf("\n");
-	}
+	//for (int i = 0; i < argc; i++){
+	//	printf(argv[i]);
+	//	printf("\n");
+	//}
+	//
+	//printf("%d",0);
+	std::vector<int> timmy(2, 1);
+	timmy.push_back(0);
+	printf("%i%\n", timmy.capacity());
+	timmy.reserve(3);
+	printf("%i%\n", timmy.capacity());
 
-
-	printf("%d",0);
+	getchar();
 	return 0;
 }
