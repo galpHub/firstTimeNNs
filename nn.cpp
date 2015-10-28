@@ -710,13 +710,7 @@ n_network nnFromFile(char* filename)
 		std::vector < std::vector<std::vector<int>> > interLayerConnections;
 		std::vector<std::string> neuronTypes;
 
-		//std::getline(inputFile, line);
-		//std::vector<int> nnParameters = stoiVector(std::vector<std::string>(1, line));
-		//int numOfLayers = nnParameters[0];
-		//int numOfInputs = nnParameters[1];
-
-		//std::vector < layer > newLayers(numOfLayers);
-		//newLayers[0] = layer(numOfInputs);
+ 
 
 		while (std::getline(inputFile, line))
 		{
@@ -757,17 +751,12 @@ n_network nnFromFile(char* filename)
 
 int main(int argc, char** argv){
 
-	//for (int i = 0; i < argc; i++){
-	//	printf(argv[i]);
-	//	printf("\n");
-	//}
 	//
-	//printf("%d",0);
-	std::vector<int> timmy(2, 1);
-	timmy.push_back(0);
-	printf("%i%\n", timmy.capacity());
-	timmy.reserve(3);
-	printf("%i%\n", timmy.capacity());
+	// Usage of this code should proceed as:
+	// nn.exe -i InputFile.txt -tr TrainSamples.txt -te TestSamples.txt -w Weights.txt
+	//
+	
+	n_network brain = nnFromFile(argv[1]);
 
 	getchar();
 	return 0;
